@@ -7,7 +7,7 @@ output:
         number_sections: true
 ---
 # Overview of Checkpoint
-We are going to explore methods for analyzing bipartite networks for interdisciplinary teachign practice. We will use a data set gathered in Fall 2017, where mathematics topics were recorded while in a marine biology class.
+We are going to explore methods for analyzing bipartite networks for interdisciplinary teaching practice. We will use a data set gathered in Fall 2017, where mathematics topics were recorded while in a marine biology class.
 
 ## Relevant Documentation
 -   [bipartite](https://cran.r-project.org/web/packages/bipartite/bipartite.pdf)
