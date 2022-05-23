@@ -1,0 +1,169 @@
+---
+title: "Marine Math Bipartite Network"
+author: "Carrie Diaz Eaton and Sarah Neitzel"
+date: "5/23/2022"
+output: 
+    html_document: 
+        number_sections: true
+---
+# Overview of Checkpoint
+We are going to explore methods for analyzing bipartite networks for interdisciplinary teachign practice. We will use a data set gathered in Fall 2017, where mathematics topics were recorded while in a marine biology class.
+
+## Relevant Documentation
+-   [bipartite](https://cran.r-project.org/web/packages/bipartite/bipartite.pdf)
+-   [frame2webs](https://www.rdocumentation.org/packages/bipartite/versions/2.16/topics/frame2webs)
+-   [plotweb](https://www.rdocumentation.org/packages/bipartite/versions/2.16/topics/plotweb)
+-   [visweb](https://www.rdocumentation.org/packages/bipartite/versions/2.16/topics/visweb)
+-   [plotpac](https://www.rdocumentation.org/packages/bipartite/versions/2.16/topics/plotPAC)
+-   [RColorBrewer](https://www.rdocumentation.org/packages/RColorBrewer/versions/1.1-2/topics/RColorBrewer)
+
+
+## Checking and Installing Packages
+Identifying any packages needed for analysis. Check and then load only what we need.
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# Store string containing all required packages
+my_packages <- c('bipartite', 'RColorBrewer')
+
+```
+
+Figure out which of these packages is already installed
+``` {r}
+# Store all installed packages
+ya_installed <- library()$results[,1]
+
+# Check whether required packages are already installed and grab only those that still need installation
+need_install<-my_packages[!(my_packages %in% ya_installed)]
+
+#install required packages
+lapply({need_install}, install.packages, character.only = TRUE)
+
+```
+
+Now, load only unloaded packages
+``` {r}
+# Store all installed packages
+ya_loaded <- (.packages())
+
+# Check whether required packages are already installed and grab only those that still need installation
+need_load<-my_packages[!(my_packages %in% ya_loaded)]
+
+# Load required packages
+lapply(need_load, require, character.only = TRUE)
+```
+
+## Data Handling
+Clean as necessary.  
+Read in as a graph object.  
+
+### Read in Data  
+Read in the marinemath.csv file and call it mmt.
+
+``` {r}
+mmt<-read.csv("marinemath.csv")
+```
+
+Take a peak inside mmt. 
+``` {r}
+head(mmt)
+str(mmt)
+```
+
+
+# Analyzing Bipartite Graphs
+
+## Structuring the bipartite graph object
+
+To convert the data frame into a graph object, use frame2webs.
+
+``` {r}
+#selects columns of interest
+mmweb_mathlow<-frame2webs(mmt, varnames = c("MathName", "MarineName", "webID"), type.out = "list", emptylist = TRUE)
+```
+
+## Visualizing Bipartite Networks 
+
+### Plotting network interactions between two node types 
+Edges are the connections between nodes. The thickness of an edge indicates the strength of the connection (number of times that particular combination was mentioned). However, in the case study, most concepts were connected only once or twice (a feature of network heterogeneity mentioned above), so to be able to more easily visually detect discernible differences in edge width, use the default method ‘cca’ for ‘plotweb’, which minimizes crossover of interactions, and make liberal use of color via ‘col.interaction’ and ‘bor.col.interaction’. We suggest using Martin Krywinski’s 12 color palette designed for color blind accessibility. In addition to improving readability, utilizing ‘cca’ naturally groups highly connected concepts together and moves them towards the center of the plot.
+
+Methods other than ‘cca’ do have merit but can lead to issues with edge readability. If your concept data have a logical order, such as starting with concepts introduced early in the semester and then progressing through time, or can be parsed into one using the function ‘order’ or the ‘sequence’ variable in ‘plotweb’, method ‘normal’ can be used to plot the interactions across time or any other ordered variable. Though edge readability can be an issue, ‘normal’ can be useful for considering trends in node size, such as if concepts that introduced earlier are more or less highly connected that ones introduced later. While this case study worked only with data from one classroom, multiple webs can be stacked on top of each other and interlinked using the variable ‘add’ in ‘plotweb’.
+
+
+``` {r}
+cols1<-c('#006e82', '#8214a0', '#005ac8', '#00a0fa', '#fa78fa', '#14d2dc', '#aa0a3c', '#fa7850', '#0ab45a', '#f0f032', '#a0fa82', '#fae6be') 
+plotweb(mmweb_mathlow$'Mar Bio', method='cca', labsize=1, x.lim=c(0,3.45), y.lim=c(-0.2,2.2), text.rot=90, col.interaction=cols1, bor.col.interaction=cols1)
+```
+
+
+### Visualizing the interaction matrix
+This code will visualize the interaction/adjacency matrix. 
+The third type of visualization is a grid plot produced via the function ‘visweb’ (Figure 3). It is a visualization of the interaction matrix between the two disciplines. The default ‘type’ for ‘visweb’ is ‘nested’, meaning that items are ordered according to the number of connections and gradations in color indicate how many times that particular connection was observed. Therefore, a nested visweb could be better for visualizing most referenced topics as discussed in 2.4.1 as an alternative to true web.  The white boxes indicate an edge size of zero, meaning zero interactions were observed between those two specific concepts; light green is an edge size of one; and dark teal is an edge size of two. 
+
+
+``` {r}
+cols2<-c('white', '#a0fa82', '#006e82')
+#you can also try other palettes
+#cols2 <- brewer.pal(3, "Reds")
+visweb(mmweb_mathlow$'Mar Bio', type='nested', labsize=1, plotsize=28, square="defined", def.col=cols2)
+```
+
+While ‘nested’ is likely the most helpful grid plot, other types include ‘diagonal’, which can be used to identify compartments or modularity of the network, and ‘none’, which plots the web in the provided order much like the ‘normal’ method for ‘plotweb’
+
+
+``` {r}
+cols2<-c('white', '#a0fa82', '#006e82')
+#you can also try other palettes
+#cols2 <- brewer.pal(3, "Reds")
+visweb(mmweb_mathlow$'Mar Bio', type='diagonal', labsize=1, plotsize=28, square="defined", def.col=cols2)
+``` 
+
+### Unimodal visualizations
+Next we look at a unimodal version of the bimodal data. 
+
+The fourth type of visualization is a competition plot done via ‘plotPAC’ (Figure 4). In a biological context, ‘plotPAC’ is used to visualize potential competition with species as circles and shared pollinator/predators as lines. In the context of interdisciplinary work, it can be used to assess the interconnectedness of concepts in one discipline via their connectivity to concepts in the other discipline. It specifically plots the ‘lower’ concepts, hence why the more complete outside concept list - i.e. math - is best assigned as the ‘lower’ level. However, if graphs for both levels are desired, simply create a second web object with ‘frame2webs’ where the level designations are swapped. In the competition plot, items are labelled with their row numbers to conserve space; a quick reference list can be created via the function ‘rownames’.
+
+In the competition plot, circle size corresponds to node size. How much the circle is filled in indicates extent of ‘specialization’ - less fill indicates a ‘generalist’ whereas more fill indicates a ‘specialist’. Lines indicate a shared ‘higher’ level concept between those two ‘lower’ level concepts with the width of the line indicating the strength of the connection.
+
+While the competition plot is also a way of examining nestedness much like the grid plot, it examines nestedness with more of a concept-focus rather than a webwide-focus. This makes it useful for considering novel ways of approaching the ‘lower’ level with the specific goal of enhancing understanding of the ‘upper’ level.
+
+
+``` {r}
+plotPAC(mmweb_mathlow$'Mar Bio', scaling=1.5, fill.col=rgb(0,110/255,130/255,0.5), arrow.col=rgb(0,110/255,130/255,0.5)) 
+rownames(mmweb_mathlow$'Mar Bio')
+```
+
+
+## Quantitive analysis
+
+### Bipartite summary numbers/indices
+Calculate network-level number summaries, similar to unimodal number summaries.   
+``` {r}
+network<-networklevel(mmweb_mathlow$'Mar Bio')
+network
+```
+
+
+### Within-group summaries
+The function grouplevel() calculates summaries related to each group (marine and math). 
+
+``` {r}
+group<-grouplevel(mmweb_mathlow$'Mar Bio') 
+group
+```
+ 
+
+### Node-level summaries
+The function specieslevel() calculates summaries related to each node. 
+``` {r}
+species<-specieslevel(mmweb_mathlow$'Mar Bio') 
+species$'higher level'['salinity',] 
+species$'lower level'['max/min',]
+```
+
+
+### Degree Distributions
+Generate degree distribution for each (compare and contrast)
+``` {r}
+degreedistr(mmweb_mathlow$'Mar Bio', plot.it=TRUE, pure.call=TRUE, silent=TRUE, level="both")
+```
